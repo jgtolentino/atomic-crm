@@ -67,22 +67,26 @@ export const LoginPage = (props: { redirectTo?: string }) => {
             <div className="flex flex-col space-y-2 text-center">
               <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
             </div>
-            <Form className="space-y-8" onSubmit={handleSubmit}>
-              <TextInput
-                label="Email"
-                source="email"
-                type="email"
-                validate={required()}
-              />
-              <TextInput
-                label="Password"
-                source="password"
-                type="password"
-                validate={required()}
-              />
+            <Form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <TextInput
+                  label="Email"
+                  source="email"
+                  type="email"
+                  validate={required()}
+                />
+              </div>
+              <div className="space-y-2">
+                <TextInput
+                  label="Password"
+                  source="password"
+                  type="password"
+                  validate={required()}
+                />
+              </div>
               <Button
                 type="submit"
-                className="cursor-pointer"
+                className="w-full cursor-pointer"
                 disabled={loading}
               >
                 Sign in
