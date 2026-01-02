@@ -21,7 +21,8 @@ export const StartPage = () => {
 
   if (isPending) return <LoginSkeleton />;
   if (error) return <LoginPage />;
-  if (isInitialized) return <LoginPage />;
+  // Default to sign-in page; sign-up is only for first-time setup
+  if (isInitialized === false) return <Navigate to="/sign-up" />;
 
-  return <Navigate to="/sign-up" />;
+  return <LoginPage />;
 };
