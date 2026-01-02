@@ -24,9 +24,19 @@ const baseAuthProvider = supabaseAuthProvider(supabase, {
 
 export async function getIsInitialized() {
   if (getIsInitialized._is_initialized_cache == null) {
-    const { data } = await supabase.from("init_state").select("is_initialized");
+    const { data, error } = await supabase
+      .from("init_state")
+      .select("is_initialized");
 
-    getIsInitialized._is_initialized_cache = data?.at(0)?.is_initialized > 0;
+    if (error) {
+      // On error, default to initialized (show login page, not sign-up)
+      // This prevents sign-up loops when the query fails due to network/RLS issues
+      console.error("Failed to check init_state:", error);
+      getIsInitialized._is_initialized_cache = true;
+    } else {
+      getIsInitialized._is_initialized_cache =
+        (data?.at(0)?.is_initialized ?? 0) > 0;
+    }
   }
 
   return getIsInitialized._is_initialized_cache;
