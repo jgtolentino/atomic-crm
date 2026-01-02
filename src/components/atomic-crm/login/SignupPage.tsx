@@ -117,7 +117,7 @@ export const SignupPage = () => {
           <p className="text-base mb-4">
             Create the first user account to complete the setup.
           </p>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pointer-events-auto">
             <div className="flex flex-col gap-2">
               <Label htmlFor="first_name">First name</Label>
               <Input
@@ -170,9 +170,9 @@ export const SignupPage = () => {
                 )}
               </Button>
             </div>
-            <div className="mt-4 text-sm text-center">
+            <div className="mt-4 text-sm text-center pointer-events-auto">
               Already have an account?{" "}
-              <Link className="underline" to="/login">
+              <Link className="underline cursor-pointer relative z-10" to="/login">
                 Sign in
               </Link>
             </div>

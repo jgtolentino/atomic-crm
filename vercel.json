@@ -1,0 +1,19 @@
+{
+  "headers": [
+    {
+      "source": "/(manifest.json|favicon.ico|.*\\.png|.*\\.svg|.*\\.jpg|.*\\.jpeg)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
