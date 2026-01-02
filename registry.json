@@ -101,6 +101,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/settings/ReminderSettings.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/sales/index.ts",
           "type": "registry:component"
         },

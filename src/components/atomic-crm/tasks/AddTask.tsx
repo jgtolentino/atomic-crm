@@ -31,9 +31,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 import { contactOptionText } from "../misc/ContactOption";
 import { useConfigurationContext } from "../root/ConfigurationContext";
+
+const REMINDER_OPTIONS = [
+  { id: 1, name: "1 hour before" },
+  { id: 2, name: "2 hours before" },
+  { id: 4, name: "4 hours before" },
+  { id: 8, name: "8 hours before" },
+  { id: 24, name: "1 day before" },
+  { id: 48, name: "2 days before" },
+  { id: 72, name: "3 days before" },
+];
 
 export const AddTask = ({
   selectContact,
@@ -110,6 +122,8 @@ export const AddTask = ({
           contact_id: contact?.id,
           due_date: new Date().toISOString().slice(0, 10),
           sales_id: identity.id,
+          reminder_enabled: true,
+          reminder_hours_before: 24,
         }}
         transform={(data) => {
           const dueDate = new Date(data.due_date);
@@ -176,6 +190,32 @@ export const AddTask = ({
                       name: type,
                     }))}
                     helperText={false}
+                  />
+                </div>
+
+                {/* Reminder Settings */}
+                <div className="border-t pt-4 space-y-3">
+                  <Label className="text-base font-medium">Reminder</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="reminder-enabled" className="text-sm font-normal cursor-pointer">
+                      Send reminder email
+                    </Label>
+                    <Switch
+                      id="reminder-enabled"
+                      defaultChecked={true}
+                      onCheckedChange={(checked) => {
+                        const form = document.querySelector('form');
+                        const input = form?.querySelector('input[name="reminder_enabled"]') as HTMLInputElement;
+                        if (input) input.value = String(checked);
+                      }}
+                    />
+                  </div>
+                  <SelectInput
+                    source="reminder_hours_before"
+                    label="Remind me"
+                    choices={REMINDER_OPTIONS}
+                    helperText={false}
+                    className="m-0"
                   />
                 </div>
               </div>

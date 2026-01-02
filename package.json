@@ -6,7 +6,7 @@
     "test": "vitest",
     "dev": "vite --force",
     "dev:demo": "vite --config vite.demo.config --force",
-    "build": "tsc && vite build",
+    "build": "bash scripts/healthcheck-schema.sh && tsc && vite build",
     "build:demo": "tsc && vite build --config vite.demo.config",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
@@ -18,6 +18,7 @@
     "registry:gen": "node ./scripts/generate-registry.mjs",
     "ghpages:deploy": "node ./scripts/ghpages-deploy.mjs",
     "supabase:remote:init": "node ./scripts/supabase-remote-init.mjs",
+    "healthcheck": "bash scripts/healthcheck-schema.sh",
     "prepare": "husky"
   },
   "dependencies": {

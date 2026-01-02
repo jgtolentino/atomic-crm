@@ -1,0 +1,52 @@
+name: Schema Healthcheck
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create .env file with required variables
+        run: |
+          echo "VITE_SUPABASE_SCHEMA=crm" >> .env.vercel
+          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env.vercel
+          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env.vercel
+
+      - name: Run schema healthcheck
+        run: bash scripts/healthcheck-schema.sh
+
+      - name: Verify VITE_SUPABASE_SCHEMA in package.json
+        run: |
+          if ! grep -q "VITE_SUPABASE_SCHEMA" .env.vercel; then
+            echo "❌ CRITICAL: VITE_SUPABASE_SCHEMA not found in environment"
+            exit 1
+          fi
+          SCHEMA_VALUE=$(grep VITE_SUPABASE_SCHEMA .env.vercel | cut -d'=' -f2 | tr -d '"')
+          if [ "$SCHEMA_VALUE" != "crm" ]; then
+            echo "❌ CRITICAL: VITE_SUPABASE_SCHEMA is '$SCHEMA_VALUE', expected 'crm'"
+            exit 1
+          fi
+          echo "✅ Schema configuration locked to 'crm'"
+
+      - name: Post-healthcheck summary
+        if: always()
+        run: |
+          echo "### Schema Healthcheck Results 🔍" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Schema**: \`crm\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
