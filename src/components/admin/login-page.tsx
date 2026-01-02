@@ -68,7 +68,7 @@ export const LoginPage = (props: { redirectTo?: string }) => {
             <div className="flex flex-col space-y-2 text-center">
               <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
             </div>
-            <Form className="space-y-4" onSubmit={handleSubmit}>
+            <Form className="space-y-4 pointer-events-auto" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <TextInput
                   label="Email"
@@ -87,7 +87,7 @@ export const LoginPage = (props: { redirectTo?: string }) => {
               </div>
               <Button
                 type="submit"
-                className="w-full cursor-pointer"
+                className="w-full cursor-pointer relative z-10"
                 disabled={loading}
               >
                 Sign in
@@ -97,17 +97,17 @@ export const LoginPage = (props: { redirectTo?: string }) => {
             <button
               type="button"
               onClick={() => navigate("/forgot-password")}
-              className="text-sm text-center hover:underline cursor-pointer bg-transparent border-none p-0"
+              className="text-sm text-center hover:underline cursor-pointer bg-transparent border-none p-0 pointer-events-auto relative z-10"
             >
               Forgot your password?
             </button>
 
-            <div className="mt-4 text-sm text-center">
+            <div className="mt-4 text-sm text-center pointer-events-auto">
               Don't have an account?{" "}
               <button
                 type="button"
                 onClick={() => navigate("/sign-up")}
-                className="underline cursor-pointer bg-transparent border-none p-0"
+                className="underline cursor-pointer bg-transparent border-none p-0 relative z-10"
               >
                 Create account
               </button>
