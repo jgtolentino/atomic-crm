@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useDataProvider, useLogin, useNotify } from "ra-core";
+import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { Navigate } from "react-router";
+import { Link, Navigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,9 @@ export const SignupPage = () => {
   const queryClient = useQueryClient();
   const dataProvider = useDataProvider<CrmDataProvider>();
   const { darkModeLogo: logo, title } = useConfigurationContext();
+  const [showCheckEmail, setShowCheckEmail] = useState(false);
+  const [signupEmail, setSignupEmail] = useState("");
+
   const { data: isInitialized, isPending } = useQuery({
     queryKey: ["init"],
     queryFn: async () => {
@@ -29,17 +33,11 @@ export const SignupPage = () => {
       return dataProvider.signUp(data);
     },
     onSuccess: (data) => {
-      login({
-        email: data.email,
-        password: data.password,
-        redirectTo: "/contacts",
-      }).then(() => {
-        notify("Initial user successfully created");
-        // FIXME: We should probably provide a hook for that in the ra-core package
-        queryClient.invalidateQueries({
-          queryKey: ["auth", "canAccess"],
-        });
-      });
+      // Show "Check your email" screen instead of auto-login
+      // This prevents the "Email not confirmed" loop when Supabase email confirmation is enabled
+      setSignupEmail(data.email);
+      setShowCheckEmail(true);
+      notify("Account created! Please check your email to confirm.");
     },
     onError: () => {
       notify("An error occurred. Please try again.");
@@ -69,6 +67,38 @@ export const SignupPage = () => {
   const onSubmit: SubmitHandler<SignUpData> = async (data) => {
     mutate(data);
   };
+
+  // Show "Check your email" screen after successful sign-up
+  if (showCheckEmail) {
+    return (
+      <div className="h-screen p-8">
+        <div className="flex items-center gap-4">
+          <img
+            src={logo}
+            alt={title}
+            width={24}
+            className="filter brightness-0 invert"
+          />
+          <h1 className="text-xl font-semibold">{title}</h1>
+        </div>
+        <div className="h-full">
+          <div className="max-w-sm mx-auto h-full flex flex-col justify-center gap-4">
+            <h1 className="text-2xl font-bold mb-4">Check your email</h1>
+            <p className="text-base mb-4">
+              We've sent a confirmation email to <strong>{signupEmail}</strong>.
+              Please check your inbox and click the confirmation link to activate your account.
+            </p>
+            <div className="mt-4 text-sm text-center">
+              Already confirmed?{" "}
+              <Link className="underline" to="/login">
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen p-8">
@@ -139,6 +169,12 @@ export const SignupPage = () => {
                   "Create account"
                 )}
               </Button>
+            </div>
+            <div className="mt-4 text-sm text-center">
+              Already have an account?{" "}
+              <Link className="underline" to="/login">
+                Sign in
+              </Link>
             </div>
           </form>
         </div>
