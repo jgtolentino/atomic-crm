@@ -37,3 +37,4 @@ dist/
 
 # Shadcn Registry
 public/r/
+.vercel

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form, required, useLogin, useNotify } from "ra-core";
 import type { SubmitHandler, FieldValues } from "react-hook-form";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/admin/text-input";
 import { Notification } from "@/components/admin/notification";
@@ -22,6 +22,7 @@ export const LoginPage = (props: { redirectTo?: string }) => {
   const [loading, setLoading] = useState(false);
   const login = useLogin();
   const notify = useNotify();
+  const navigate = useNavigate();
 
   const handleSubmit: SubmitHandler<FieldValues> = (values) => {
     setLoading(true);
@@ -93,18 +94,23 @@ export const LoginPage = (props: { redirectTo?: string }) => {
               </Button>
             </Form>
 
-            <Link
-              to={"/forgot-password"}
-              className="text-sm text-center hover:underline"
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-sm text-center hover:underline cursor-pointer bg-transparent border-none p-0"
             >
               Forgot your password?
-            </Link>
+            </button>
 
             <div className="mt-4 text-sm text-center">
               Don't have an account?{" "}
-              <Link className="underline" to="/sign-up">
+              <button
+                type="button"
+                onClick={() => navigate("/sign-up")}
+                className="underline cursor-pointer bg-transparent border-none p-0"
+              >
                 Create account
-              </Link>
+              </button>
             </div>
           </div>
         </div>
