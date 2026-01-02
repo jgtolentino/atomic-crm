@@ -29,6 +29,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/env.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/consts.ts",
           "type": "registry:component"
         },
@@ -662,6 +666,10 @@
         },
         {
           "path": "src/components/supabase/set-password-page.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/supabase/oauth-consent-page.tsx",
           "type": "registry:component"
         },
         {
