@@ -17,7 +17,7 @@ if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {
 if (SUPABASE_URL.startsWith('postgres://') || SUPABASE_URL.includes(':6543') || SUPABASE_URL.includes('pooler')) {
   throw new Error(
     `VITE_SUPABASE_URL is set to a Postgres connection string: "${SUPABASE_URL}". ` +
-    `Frontend needs the HTTP API URL like: https://xkxyvboeubffxxbebsll.supabase.co ` +
+    `Frontend needs the HTTP API URL like: https://spdtwktxdalcfigzeqrz.supabase.co ` +
     `(Put Postgres connection strings in DATABASE_URL without VITE_ prefix for server-side use only)`
   );
 }
