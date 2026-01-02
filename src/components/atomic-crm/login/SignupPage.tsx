@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useDataProvider, useLogin, useNotify } from "ra-core";
-import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Link, Navigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -17,8 +16,6 @@ export const SignupPage = () => {
   const queryClient = useQueryClient();
   const dataProvider = useDataProvider<CrmDataProvider>();
   const { darkModeLogo: logo, title } = useConfigurationContext();
-  const [showCheckEmail, setShowCheckEmail] = useState(false);
-  const [signupEmail, setSignupEmail] = useState("");
 
   const { data: isInitialized, isPending } = useQuery({
     queryKey: ["init"],
@@ -32,12 +29,11 @@ export const SignupPage = () => {
     mutationFn: async (data: SignUpData) => {
       return dataProvider.signUp(data);
     },
-    onSuccess: (data) => {
-      // Show "Check your email" screen instead of auto-login
-      // This prevents the "Email not confirmed" loop when Supabase email confirmation is enabled
-      setSignupEmail(data.email);
-      setShowCheckEmail(true);
-      notify("Account created! Please check your email to confirm.");
+    onSuccess: async (data) => {
+      // Auto-login after signup (email confirmation is disabled)
+      notify("Account created! Signing you in...");
+      queryClient.invalidateQueries({ queryKey: ["init"] });
+      await login({ email: data.email, password: data.password });
     },
     onError: () => {
       notify("An error occurred. Please try again.");
@@ -67,38 +63,6 @@ export const SignupPage = () => {
   const onSubmit: SubmitHandler<SignUpData> = async (data) => {
     mutate(data);
   };
-
-  // Show "Check your email" screen after successful sign-up
-  if (showCheckEmail) {
-    return (
-      <div className="h-screen p-8">
-        <div className="flex items-center gap-4">
-          <img
-            src={logo}
-            alt={title}
-            width={24}
-            className="filter brightness-0 invert"
-          />
-          <h1 className="text-xl font-semibold">{title}</h1>
-        </div>
-        <div className="h-full">
-          <div className="max-w-sm mx-auto h-full flex flex-col justify-center gap-4">
-            <h1 className="text-2xl font-bold mb-4">Check your email</h1>
-            <p className="text-base mb-4">
-              We've sent a confirmation email to <strong>{signupEmail}</strong>.
-              Please check your inbox and click the confirmation link to activate your account.
-            </p>
-            <div className="mt-4 text-sm text-center">
-              Already confirmed?{" "}
-              <Link className="underline" to="/login">
-                Sign in
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen p-8">
