@@ -3,6 +3,8 @@
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Database schema: 'crm' for production, 'public' for local development
+export const SUPABASE_SCHEMA = (import.meta.env.VITE_SUPABASE_SCHEMA as string) || "public";
 
 // Hard fail if environment variables are missing or invalid
 if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {

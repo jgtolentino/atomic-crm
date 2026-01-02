@@ -139,9 +139,13 @@ npm run build
 ```bash
 VITE_SUPABASE_URL=https://spdtwktxdalcfigzeqrz.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_SCHEMA=crm  # REQUIRED: Use 'crm' schema for production
 VITE_IS_DEMO=false
 VITE_INBOUND_EMAIL=2aff30e603e54dc3eb556bd9e03ee099@inbound.postmarkapp.com
 ```
+
+> **⚠️ IMPORTANT**: The `VITE_SUPABASE_SCHEMA=crm` variable is required for production deployments.
+> Without it, the app defaults to `public` schema and will fail with "table not found" errors.
 
 **Deployment Steps**:
 1. Push to GitHub
