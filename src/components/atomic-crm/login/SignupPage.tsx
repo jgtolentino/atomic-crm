@@ -61,7 +61,38 @@ export const SignupPage = () => {
 
   // For the moment, we only allow one user to sign up. Other users must be created by the administrator.
   if (isInitialized) {
-    return <Navigate to="/login" />;
+    return (
+      <div className="h-screen p-8">
+        <div className="flex items-center gap-4">
+          <img
+            src={logo}
+            alt={title}
+            width={24}
+            className="filter brightness-0 invert"
+          />
+          <h1 className="text-xl font-semibold">{title}</h1>
+        </div>
+        <div className="h-full">
+          <div className="max-w-sm mx-auto h-full flex flex-col justify-center gap-4">
+            <h1 className="text-2xl font-bold mb-4">Sign in required</h1>
+            <p className="text-base mb-4">
+              Account creation is disabled. The system has already been initialized.
+            </p>
+            <p className="text-base mb-4">
+              Please sign in with your existing account or contact your administrator for access.
+            </p>
+            <div className="mt-4 text-center">
+              <Link
+                to="/login"
+                className="inline-block bg-foreground text-background px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity"
+              >
+                Go to sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const onSubmit: SubmitHandler<SignUpData> = async (data) => {
@@ -113,9 +144,9 @@ export const SignupPage = () => {
       </div>
       <div className="h-full">
         <div className="max-w-sm mx-auto h-full flex flex-col justify-center gap-4">
-          <h1 className="text-2xl font-bold mb-4">Welcome to Atomic CRM</h1>
+          <h1 className="text-2xl font-bold mb-4">Create admin account</h1>
           <p className="text-base mb-4">
-            Create the first user account to complete the setup.
+            Create the first admin account to complete setup.
           </p>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pointer-events-auto">
             <div className="flex flex-col gap-2">
