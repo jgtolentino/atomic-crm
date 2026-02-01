@@ -1,0 +1,11 @@
+# Cloudflare DNS Configuration
+# Copy this file to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to version control
+
+cloudflare_api_token = "TODO_your_cloudflare_api_token"
+zone_id              = "TODO_your_cloudflare_zone_id"
+domain               = "insightpulseai.com"
+
+# DigitalOcean droplet IPs (defaults provided, override if changed)
+# plane_droplet_ip = "68.183.179.64"
+# odoo_droplet_ip  = "178.128.112.214"
