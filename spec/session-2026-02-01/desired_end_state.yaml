@@ -1,0 +1,273 @@
+version: "1.0.0"
+session:
+  date: "2026-02-01"
+  timezone: "Asia/Manila"
+  goal: "Consolidate control plane + hosting + governance across Supabase/Vercel/DO; wire Plane↔Odoo; add analytics replica; harden production; optimize costs; purge .net references."
+  principals:
+    ssot: "Git as source of truth (spec/*, infra/*, supabase/*, scripts/*)."
+    no_ui_steps: true
+    idempotent: true
+    auditability: "All changes produce logs/evidence in ops tables + CI artifacts."
+
+org:
+  current_org: "Insightpulseai-net"
+  domain_policy:
+    canonical_apex_domain: "insightpulseai.com"
+    deprecated_domain_strings:
+      - "insightpulseai.net"
+      - "Insightpulseai-net"   # NOTE: only as textual reference; not GitHub org rename
+    allowed_email_domains:
+      - "insightpulseai.com"
+    mail_domains:
+      keep_mailgun_subdomain_as_is: true
+      mailgun_subdomain: "mg.insightpulseai.net"   # explicitly allowed exception
+  governance:
+    required_docs:
+      - "docs/governance/REPO_STRUCTURE_POLICY.md"
+      - "docs/hosting/HOSTING_OPTIONS_EVALUATION.md"
+      - "docs/platform/RBAC_MATRIX.md"
+      - "docs/platform/PLATFORM_KIT_UI.md"
+      - "docs/platform/ENTERPRISE_LANDING.md"
+    ci_enforcement:
+      domain_string_guard:
+        workflow: ".github/workflows/domain-string-guard.yml"
+        blocks_on_deprecated_domains: true
+        exceptions:
+          - "docs/governance/*"  # policy docs may mention deprecated strings
+          - "docs/evidence/*"
+      spec_kit_enforcement:
+        required_bundle:
+          - "spec/<slug>/constitution.md"
+          - "spec/<slug>/prd.md"
+          - "spec/<slug>/plan.md"
+          - "spec/<slug>/tasks.md"
+
+repositories:
+  ssot:
+    platform_kit_template_path: "templates/platform-kit/"
+    contents_expected:
+      - "spec/platform-kit/"
+      - "apps/supabase/supabase/"
+      - "connectors/sdk/src/openfabric/"
+      - "lakehouse/{bronze,silver,gold,dbt}/"
+      - "infra/docker/"
+      - "scripts/"
+      - "docs/architecture/"
+  structure_policy:
+    upstream_integration_rules:
+      oca_repos:
+        pattern: "consume (do not fork) via pinned SHAs in REPOS.lock + sync script"
+        enforcement: "REPOS.lock required; CI verifies SHAs present"
+      odoo_core:
+        pattern: "mirror/clone for runtime; keep customizations in ipai_* addons only"
+      makeplane_plane:
+        pattern: "service dependency via container/compose; fork only if patching"
+      shelf_nu:
+        pattern: "service dependency via container/compose; fork only if patching"
+      marmelab_atomic_crm:
+        pattern: "service dependency via container/compose; fork only if patching"
+      supabase:
+        pattern: "managed service or self-host; migrations/functions in repo as SSOT"
+      vercel:
+        pattern: "deploy target for web/control-plane UI; configuration via API/scripts"
+
+hosting:
+  decision:
+    recommended: "hybrid"
+    hybrid_definition:
+      database: "DigitalOcean Managed Postgres (odoo-db-sgp1) as primary OLTP for Odoo"
+      auth: "Supabase Auth"
+      storage: "Supabase Storage (or S3-compatible MinIO where needed)"
+      app_hosts:
+        - "Vercel for web UIs (www/app)"
+        - "DO droplets for stateful services (Odoo/Plane/n8n)"
+  inventory_observed:
+    digitalocean:
+      managed_postgres:
+        - name: "odoo-db-sgp1"
+          region: "SGP1"
+          version: "PostgreSQL 16"
+          size: "2GB/30GiB"
+          mode: "primary-only"
+      droplets:
+        - name: "plane-ce-prod"
+          ip: "68.183.179.64"
+          region: "SGP1"
+        - name: "odoo-erp-prod"
+          ip: "178.128.112.214"
+          region: "SGP1"
+      domains:
+        - "mg.insightpulseai.net"
+  dns_target_state:
+    provider: "TBD_cloudflare_or_do_dns"
+    single_authoritative_dns: true
+    records:
+      www:
+        type: "CNAME"
+        target: "Vercel (project alias)"
+      app:
+        type: "CNAME"
+        target: "Vercel (platform kit UI)"
+      plane:
+        type: "A"
+        target: "68.183.179.64"
+      erp:
+        type: "A"
+        target: "178.128.112.214"
+      mg:
+        delegated_zone: "mg.insightpulseai.net"
+        managed_in: "DigitalOcean DNS (keep)"
+        records_expected:
+          mx:
+            - "mxa.mailgun.org"
+            - "mxb.mailgun.org"
+          spf: "v=spf1 include:mailgun.org ~all"
+          dmarc: "v=DMARC1; p=none; pct=100; fo=1; ri=3600"
+          dkim_selector: "pic._domainkey.mg.insightpulseai.net"
+  vercel:
+    team_model:
+      combine_with_supabase_team: true
+      integration_permissions_reviewed: true
+    projects:
+      - name: "platform-kit-ui"
+        framework: "Next.js"
+        node_version: "24.x"
+        deploy_protection: "standard"
+        build_machine_default: "standard_or_enhanced"  # cost-guard; avoid turbo unless proven needed
+      - name: "www"
+        framework: "Next.js (or static)"
+        node_version: "24.x"
+
+control_plane:
+  supabase_ops_schema:
+    required_tables:
+      - "ops.sync_jobs"
+      - "ops.sync_events"
+      - "ops.id_map"
+    required_functions:
+      - "ops.claim_sync_jobs(limit, worker)"
+      - "ops.finish_sync_job(job_id, status, error)"
+    required_properties:
+      idempotency: "dedupe_key unique"
+      audit_log: "sync_events append-only"
+  edge_functions:
+    required:
+      - name: "plane-webhook"
+        purpose: "Ingest Plane webhooks; enqueue ops.sync_jobs with dedupe"
+        auth: "signature_verify_if_available_else_allow_with_rate_limit"
+      - name: "odoo-webhook"
+        purpose: "Ingest Odoo events; enqueue ops.sync_jobs with dedupe"
+        auth: "shared_secret_or_jwt"
+  n8n:
+    required_workflows:
+      - name: "Plane ↔ Odoo Sync Runner"
+        schedule: "every 30s"
+        steps:
+          - "claim jobs from ops.claim_sync_jobs"
+          - "route by source_system"
+          - "apply mapping rules"
+          - "write id_map"
+          - "finish_sync_job"
+        invariants:
+          - "no double-creates (id_map lookup first)"
+          - "retry safe (idempotent writes)"
+          - "deadletter after max attempts"
+
+integrations:
+  plane_to_odoo:
+    target_state:
+      entities:
+        - plane_issue_to_odoo_task
+        - plane_project_to_odoo_project
+        - plane_user_to_odoo_partner_optional
+      mapping_contract:
+        required_fields:
+          - "external_id"
+          - "title"
+          - "description"
+          - "status"
+          - "priority"
+          - "assignee"
+          - "due_date"
+          - "tags"
+        id_map_entity_types:
+          - "issue"
+          - "project"
+          - "user"
+      delivery: "Supabase ops queue + n8n executor"
+  odoo_to_plane:
+    target_state:
+      entities:
+        - odoo_task_to_plane_issue_optional
+      rules:
+        - "only sync back if tagged 'sync_plane=true' to avoid loops"
+        - "write-back limited to status + comments"
+
+analytics_replica:
+  goal: "Analytics-ready read replica for BI/AI workloads without impacting OLTP."
+  strategy_order:
+    - "logical replication (preferred) from DO Postgres to analytics target"
+    - "incremental ETL (fallback) using write_date cursor"
+  target:
+    platform: "TBD (Supabase analytics project OR second DO Postgres)"
+    schema: "analytics"
+    consumers:
+      - "Superset"
+      - "RAG/agents"
+      - "dashboards"
+  verification:
+    checks:
+      - "replication/subscription healthy"
+      - "lag under threshold"
+      - "readonly role access works"
+
+security_and_hardening:
+  objectives:
+    - "single public edge (reverse proxy / tunnel); restrict origin services"
+    - "least privilege tokens; rotate via scripted process"
+    - "audit logs for sync + deployments"
+  droplet_hardening:
+    checklist:
+      - "ufw enabled; only 22/80/443 as needed"
+      - "fail2ban installed"
+      - "automatic security updates"
+      - "docker daemon locked down"
+      - "TLS via certbot or managed TLS; HSTS enabled"
+      - "app health endpoints"
+  observability:
+    required:
+      - "error tracking (Sentry or equivalent)"
+      - "logs centralization (Vercel drains + DO syslog)"
+      - "uptime checks for erp/plane/app/www"
+
+cost_optimization:
+  principles:
+    - "avoid overprovisioned build machines"
+    - "run stateful services on DO; bursty web on Vercel"
+    - "analytics workloads off OLTP"
+  actions:
+    - "vercel build machine audit via API scripts"
+    - "docker resource limits in compose"
+    - "db connection pooling (pgbouncer/supavisor)"
+    - "disable unused integrations/log drains"
+  success_metrics:
+    - "monthly infra cost <= target_budget"
+    - "p95 latency stable"
+    - "build minutes reduced"
+
+deliverables_status:
+  already_created_in_session_context:
+    - "templates/platform-kit/ monorepo scaffold"
+    - "docs/hosting/HOSTING_OPTIONS_EVALUATION.md (branch claude/hosting-options-evaluation-Ahl2T)"
+    - "spec/ipai-platform/* bundle (constitution/prd/plan/tasks)"
+    - "docs/platform/PLATFORM_KIT_UI.md"
+    - "docs/platform/RBAC_MATRIX.md"
+    - "docs/platform/ENTERPRISE_LANDING.md"
+    - "scripts/org/replace_net_to_com.sh"
+    - ".github/workflows/domain-string-guard.yml"
+    - "docs/governance/REPO_STRUCTURE_POLICY.md"
+  pending_to_finalize:
+    - "Plane webhook payload confirmation + exact mapping implementation in n8n"
+    - "Analytics replica target selection + replication/ETL implementation"
+    - "Reverse proxy/edge consolidation (nginx or cloudflare)"
+    - "DNS provider finalization + DNS-as-code bundle"
